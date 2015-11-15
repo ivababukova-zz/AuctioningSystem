@@ -37,7 +37,7 @@ public class NewAuctionClient {
 		  boolean isAdmin = true;
 		  //ai = (IAuction)Naming.lookup("rmi://" + reg_host + ":" + reg_port + "/AuctionSystem");
 		  
-		  ai = (IAuction)Naming.lookup("rmi://localhost/CalculatorService");
+		  ai = (IAuction)Naming.lookup("rmi://localhost/AuctionSystem");
 		  
 		  user = new AuctionUser("Test User", isAdmin);  
 	  } catch (Exception e) {
