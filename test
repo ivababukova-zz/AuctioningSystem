@@ -1,0 +1,2 @@
+#!/bin/sh
+java -Djava.security.policy=policy -Djava.rmi.server.codebase=file:rmiclasses.jar -cp $PWD/junit.jar:. org.junit.runner.JUnitCore AuctionSystemTest

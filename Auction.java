@@ -1,28 +1,38 @@
-
-
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-
+/* implementation of the remote interface IAuction */
 public class Auction extends UnicastRemoteObject
 					 implements IAuction{
 
+	private static final String state_file = "state.log";
+	
 	private static final long serialVersionUID = 1L;
 	private Map<String, Item> auctionItems;
 	private String itemId;
 	
+	/* constructor */
 	protected Auction() throws RemoteException {
 		super();
-		this.auctionItems = new ConcurrentHashMap<String, Item>();
-		this.itemId = UUID.randomUUID().toString();
+		this.auctionItems = new ConcurrentHashMap<String, Item>(); // map containing all items
+		this.itemId = UUID.randomUUID().toString(); // random uuid generator, assigned to each new item
 	}
 
+	/* method that calls the Item constructor to create a new Item 
+	 * instance with the specified parameters and assign it an id */
 	public String createItem(IAuctionUser owner,
 			 String itemName,
 			 double minPrice,
@@ -86,6 +96,67 @@ public class Auction extends UnicastRemoteObject
 			s = s + " " + i.itemName() + ": " + i.itemId() + "\n";
 		}		
 		return s;
+	}
+
+	@Override
+	public boolean saveCurrentState(IAuctionUser user) throws RemoteException {
+		if (!user.isAdmin()) {
+			user.notify("Only admins are allowed to save the state of the client");
+			return false;
+		}
+		
+		try {
+			ObjectOutputStream objectOut = new ObjectOutputStream
+					(new BufferedOutputStream(new FileOutputStream(state_file)));
+			
+			objectOut.writeObject(auctionItems);
+			objectOut.writeObject(itemId);
+			objectOut.close();
+			System.out.println("State saved to " + state_file);
+			user.notify("State saved");
+			return true;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean restoreCurrentState(IAuctionUser user) throws RemoteException {
+		if (!user.isAdmin()) {
+			user.notify("Only admins are allowed to restore the state of the client");
+			return false;
+		}
+		
+		try {
+			ObjectInputStream objectIn = new ObjectInputStream
+					(new BufferedInputStream(new FileInputStream(state_file)));
+			
+			auctionItems = (Map<String, Item>) objectIn.readObject();
+			itemId = (String) objectIn.readObject();
+			objectIn.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		for (Item i: auctionItems.values()) {
+			i.setUpClosing();
+		}
+		
+		System.out.println("State restored from " + state_file);
+		user.notify("State restored");
+		return true;
 	}
 
 

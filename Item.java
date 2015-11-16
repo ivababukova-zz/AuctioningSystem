@@ -1,9 +1,5 @@
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,9 +10,6 @@ import java.util.TimerTask;
 
 public class Item implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	private IAuctionUser owner;
 	private double currPrice;
@@ -45,6 +38,7 @@ public class Item implements Serializable {
 		setUpClosing();
 	}
 	
+	/* getter methods */
 	public synchronized Date closeDate () {
 		return this.endDate;
 	}
@@ -70,13 +64,20 @@ public class Item implements Serializable {
 	}
 	
 	public synchronized String getItemProperties() throws RemoteException {
-		return this.itemName + "\n"
-				+ this.itemid + "\n"
-				+ this.currPrice + "\n"
-				+ this.descr + "\n"
-				+ this.owner.getName() + "\n";
+		return "name of item: " + this.itemName + "\n"
+			 + "current price: " + this.currPrice + "\n"
+			 + "item description: " + this.descr + "\n"
+		 	 + "owner: " + this.owner.getName() + "\n"
+		   	 + "item bid end date: " + this.endDate + "\n"
+		   	 + "is item in auction: " + this.isOpen + "\n";
 	}
 	
+	/**
+	 * this method sets up the closing time of an item.
+	 * It is called by the item constructor for each item
+	 * sets up a java.util.timer object that notifies users
+	 * at the end of an auction
+	 * */
 	public synchronized void setUpClosing() {
 		if (endDate.before(new Date())) {
 			this.isOpen = false;
@@ -146,17 +147,4 @@ public class Item implements Serializable {
 			}
 		}
 	}
-	
-	/*
-	public boolean isDateExpired() throws ParseException {
-		DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy-HH:mm");
-		Date date = new Date();
-		String todayStr = dateFormat.format(date);
-		Date today = dateFormat.parse(todayStr);
-		if (this.endDate.before(today)) {
-			return true;
-		}
-		return false;
-	}
-	*/
 }
